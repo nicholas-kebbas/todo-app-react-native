@@ -1,0 +1,9 @@
+node_modules/**/*
+.expo/*
+npm-debug.*
+images/
+package-lock.json
+.watchmanconfig
+.eslintrc
+.idea/
+.DS_Store
