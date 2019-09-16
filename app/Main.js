@@ -46,7 +46,7 @@ export default class Main extends React.Component {
 
 	async completeItemAPI(id) {
 		/* This is the correct syntax when you add a variable into the mix */
-		const response = await fetch(`http://localhost:3000/list/item/${id}`, {
+		await fetch(`http://localhost:3000/list/item/${id}`, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
@@ -56,7 +56,7 @@ export default class Main extends React.Component {
 
 	async incompleteItemAPI(id) {
 		/* This is the correct syntax when you add a variable into the mix */
-		const response = await fetch(`http://localhost:3000/list/item/${id}/incomplete`, {
+		await fetch(`http://localhost:3000/list/item/${id}/incomplete`, {
 			method: 'PUT',
 			headers: {
 				'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ export default class Main extends React.Component {
 	}
 
 	async deleteItemAPI(id) {
-		const response = await fetch(`http://localhost:3000/list/item/${id}`, {
+		await fetch(`http://localhost:3000/list/item/${id}`, {
 			method: 'DELETE',
 			headers: {
 				'Accept': 'application/json',
@@ -130,10 +130,8 @@ export default class Main extends React.Component {
 						...newItemObject
 					}
 				};
-				this.saveItems(newState.allItems);
 
 				/* This adds it to the database so it will be persistent */
-
 				return { ...newState };
 			});
 		}
@@ -144,32 +142,61 @@ export default class Main extends React.Component {
 		this.deleteItemAPI(id);
 		this.setState(prevState => {
 			const allItems = prevState.allItems;
-			delete allItems[id];
+			allItems.find((o, i) => {
+				if (o.id === id) {
+					delete allItems[i];
+					return true;
+				}
+				return false;
+			});
 			const newState = {
 				...prevState,
-				...allItems
+				allItems
 			};
-			this.saveItems(newState.allItems);
 			return { ...newState };
 		});
 	};
 
 	/* TODO: Make this change state */
 	completeItem = id => {
-		this.completeItemAPI(id);
+		this.setState(prevState => {
+			const allItems = prevState.allItems;
+			allItems.find((o, i) => {
+				if (o.id === id) {
+					allItems[i].complete = 1;
+					return true;
+				}
+				return false;
+			});
+			const newState = {
+				...prevState,
+				allItems
+			};
+			return { ...newState };
+		});
 	};
 
 	/* TODO: Make this change state */
 	incompleteItem = id => {
-		this.incompleteItemAPI(id);
-	};
-
-	saveItems = newItem => {
-		const saveItem = AsyncStorage.setItem('Todos', JSON.stringify(newItem));
+		this.setState(prevState => {
+			const allItems = prevState.allItems;
+			allItems.find((o, i) => {
+				if (o.id === id) {
+					allItems[i].complete = 0;
+					return true;
+				}
+				return false;
+			});
+			const newState = {
+				...prevState,
+				allItems
+			};
+			return { ...newState };
+		});
 	};
 
 	render() {
-		const { inputValue, loadingItems, allItems } = this.state;
+		const { inputValue, allItems } = this.state;
 
 		return (
 			<LinearGradient colors={primaryGradientArray} style={styles.container}>
@@ -185,11 +212,8 @@ export default class Main extends React.Component {
 					/>
 				</View>
 				<View style={styles.list}>
-
-					{loadingItems ? (
 						<ScrollView contentContainerStyle={styles.scrollableList}>
 							{Object.values(allItems)
-								.reverse()
 								.map(item => (
 									<List
 										key={item.id}
@@ -200,9 +224,6 @@ export default class Main extends React.Component {
 									/>
 								))}
 						</ScrollView>
-					) : (
-						<ActivityIndicator size="large" color="white" />
-					)}
 				</View>
 			</LinearGradient>
 		);
