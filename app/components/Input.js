@@ -22,13 +22,6 @@ const Input = ({ inputValue, onChangeText, onDoneAddItem }) => (
 	/>
 );
 
-// const callAPI = fetch('localhost:3000/list')
-// 	.then((response) => {
-// 		return response.json()
-// });
-
-
-
 
 const styles = StyleSheet.create({
 	input: {

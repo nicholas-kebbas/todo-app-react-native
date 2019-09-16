@@ -8,14 +8,10 @@ import {
 	AsyncStorage
 } from 'react-native';
 import { LinearGradient } from 'expo';
-import uuid from 'uuid/v1';
-
 import { primaryGradientArray } from './utils/Colors';
 import Header from './components/Header';
-import SubTitle from './components/SubTitle';
 import Input from './components/Input';
 import List from './components/List';
-import Button from './components/Button';
 
 const headerTitle = 'Todo';
 
@@ -37,36 +33,44 @@ export default class Main extends React.Component {
 			},
 			body: JSON.stringify({
 				text: input,
-				secondParam: 'yourOtherValue',
 			}),
+		});
+
+		/* This is the proper way to parse the data */
+		response.json().then(data => {
+			console.log(data.id);
+			return data.id;
+		});
+
+	}
+
+	async completeItemAPI(id) {
+		/* This is the correct syntax when you add a variable into the mix */
+		const response = await fetch(`http://localhost:3000/list/item/${id}`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			}
 		})
 	}
 
-	async completeItemAPI(input) {
-		const response = await fetch('http://localhost:3000/list/7/item', {
-			method: 'POST',
+	async incompleteItemAPI(id) {
+		/* This is the correct syntax when you add a variable into the mix */
+		const response = await fetch(`http://localhost:3000/list/item/${id}/incomplete`, {
+			method: 'PUT',
+			headers: {
+				'Content-Type': 'application/json',
+			}
+		})
+	}
+
+	async deleteItemAPI(id) {
+		const response = await fetch(`http://localhost:3000/list/item/${id}`, {
+			method: 'DELETE',
 			headers: {
 				'Accept': 'application/json',
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify({
-				text: input,
-				secondParam: 'yourOtherValue',
-			}),
-		})
-	}
-
-	async deleteItemAPI(input) {
-		const response = await fetch('http://localhost:3000/list/7/item', {
-			method: 'POST',
-			headers: {
-				'Accept': 'application/json',
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				text: input,
-				secondParam: 'yourOtherValue',
-			}),
 		})
 	}
 
@@ -91,33 +95,29 @@ export default class Main extends React.Component {
 				}
 			});
 			const json = await getItems.json();
-			console.log(json.items);
-			console.log(json.id);
-			console.log(json.items.length);
 			for (let i = 0; i < json.items.length; i++) {
 				items = json.items[i].id;
-				console.log(json.items[i].text);
 			}
 			this.setState({
 				loadingItems: true,
 				allItems: json.items
-		});
-	return json.items;
-	} catch (err) {
-		console.log(err);
-	}
-};
+			});
+			return json.items;
+		} catch (err) {
+			console.log(err);
+		}
+	};
 
-	onDoneAddItem = () => {
+	onDoneAddItem = async () => {
 		const { inputValue } = this.state;
+		const id = await this.createItemAPI(inputValue);
 		if (inputValue !== '') {
 			this.setState(prevState => {
-				const id = uuid();
-				/* This makes it update immediately */
+				/* Update state so change is immediate on frontend */
 				const newItemObject = {
 					[id]: {
 						id,
-						isCompleted: false,
+						complete: 0,
 						text: inputValue,
 						createdAt: Date.now()
 					}
@@ -133,16 +133,17 @@ export default class Main extends React.Component {
 				this.saveItems(newState.allItems);
 
 				/* This adds it to the database so it will be persistent */
-				this.createItemAPI(inputValue);
+
 				return { ...newState };
 			});
 		}
 	};
 
+	/* TODO: Make this change state */
 	deleteItem = id => {
+		this.deleteItemAPI(id);
 		this.setState(prevState => {
 			const allItems = prevState.allItems;
-			console.log("id ", id);
 			delete allItems[id];
 			const newState = {
 				...prevState,
@@ -153,38 +154,14 @@ export default class Main extends React.Component {
 		});
 	};
 
+	/* TODO: Make this change state */
 	completeItem = id => {
-		this.setState(prevState => {
-			const newState = {
-				...prevState,
-				allItems: {
-					...prevState.allItems,
-					[id]: {
-						...prevState.allItems[id],
-						isCompleted: true
-					}
-				}
-			};
-			this.saveItems(newState.allItems);
-			return { ...newState };
-		});
+		this.completeItemAPI(id);
 	};
 
+	/* TODO: Make this change state */
 	incompleteItem = id => {
-		this.setState(prevState => {
-			const newState = {
-				...prevState,
-				allItems: {
-					...prevState.allItems,
-					[id]: {
-						...prevState.allItems[id],
-						isCompleted: false
-					}
-				}
-			};
-			this.saveItems(newState.allItems);
-			return { ...newState };
-		});
+		this.incompleteItemAPI(id);
 	};
 
 	saveItems = newItem => {
@@ -201,7 +178,6 @@ export default class Main extends React.Component {
 					<Header title={headerTitle} />
 				</View>
 				<View style={styles.inputContainer}>
-					<SubTitle subtitle={"Add a new item"} />
 					<Input
 						inputValue={inputValue}
 						onChangeText={this.newInputValue}
@@ -209,9 +185,6 @@ export default class Main extends React.Component {
 					/>
 				</View>
 				<View style={styles.list}>
-					<View style={styles.column}>
-						<SubTitle subtitle={'Items'} />
-					</View>
 
 					{loadingItems ? (
 						<ScrollView contentContainerStyle={styles.scrollableList}>

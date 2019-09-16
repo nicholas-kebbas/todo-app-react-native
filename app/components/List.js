@@ -21,16 +21,19 @@ const { width } = Dimensions.get('window');
 
 class List extends Component {
 	onToggleCircle = () => {
-		const { isCompleted, id, completeItem, incompleteItem } = this.props;
-		if (isCompleted) {
-			incompleteItem(id);
-		} else {
+		const { complete, id, completeItem, incompleteItem } = this.props;
+		console.log("PROPS: ", this.props);
+		console.log("PROPS ID: ", id);
+		console.log("PROPS Completed: ", complete);
+		if (complete === 0) {
 			completeItem(id);
+		} else {
+			incompleteItem(id);
 		}
 	};
 
 	render() {
-		const { text, deleteItem, id, isCompleted } = this.props;
+		const { text, deleteItem, id, complete } = this.props;
 
 		return (
 			<View style={styles.container}>
@@ -39,7 +42,7 @@ class List extends Component {
 						<View
 							style={[
 								styles.circle,
-								isCompleted
+								complete
 									? { borderColor: circleActive }
 									: { borderColor: circleInactive }
 							]}
@@ -48,7 +51,7 @@ class List extends Component {
 					<Text
 						style={[
 							styles.text,
-							isCompleted
+							complete
 								? {
 										color: itemListTextStrike,
 										textDecorationLine: 'line-through'
@@ -59,7 +62,7 @@ class List extends Component {
 						{text}
 					</Text>
 				</View>
-				{isCompleted ? (
+				{complete ? (
 					<View style={styles.button}>
 						<TouchableOpacity onPressOut={() => deleteItem(id)}>
 							<MaterialIcons
